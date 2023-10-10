@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SPY Comps Tables</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+</head>
+<body>
+    <form action="/" method="post">
+        <label for="ticker">Enter Ticker:</label>
+        <input type="text" id="ticker" name="ticker">
+        <input type="submit" value="Submit">
+    </form>
+
+    <!-- Add this section to display flashed messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <p style="color:{{ category }}">{{ message|safe}}</p>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    <script>
+        $(function() {
+            // Autocomplete function
+            $.getJSON("/api/tickers", function(data) {
+                var sourceData = data.map(function(item) {
+                    return {
+                        label: `${item.ticker} (${item.name})`,
+                        value: item.ticker
+                    };
+                });
+                $("#ticker").autocomplete({
+                    source: sourceData
+                });
+            });
+    
+            // Form submit function
+            $('form').submit(function(event) {
+                var validTicker = $("#ticker").val();
+                var tickerList = $("#ticker").autocomplete("option", "source").map(item => item.value);
+                if (!tickerList.includes(validTicker)) {
+                    alert("Please select a stock in the S&P 500");
+                    event.preventDefault();  // Prevent form from submitting
+                }
+            });
+        });
+    </script>
+    
+</body>
+</html>

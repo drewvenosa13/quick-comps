@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Select Competitors</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script>
+        function updateCheckboxes(checkboxes) {
+            let checkedCount = 0;
+            for (let checkbox of checkboxes) {
+                if (checkbox.checked) {
+                    checkedCount++;
+                }
+            }
+    
+            for (let checkbox of checkboxes) {
+                if (checkedCount >= {{ maxComparisons }} && !checkbox.checked) {
+                    checkbox.disabled = true;
+                } else {
+                    checkbox.disabled = false;
+                }
+            }
+        }
+    
+        $(function() {
+            $.getJSON("/api/tickers", function(data) {
+                var sourceData = data.map(function(item) {
+                    return {
+                        label: `${item.ticker} (${item.name})`,
+                        value: item.ticker
+                    };
+                });
+    
+                $("#newTicker").autocomplete({
+                    source: sourceData,
+                    select: function(event, ui) {
+                        var selectedTicker = ui.item.value;
+                        var selectedName = ui.item.label.split(" (")[1].slice(0, -1); // Extract name from label
+    
+                        // Fetch CIK from your backend using the selectedTicker
+                        $.getJSON(`/api/cik?ticker=${selectedTicker}`, function(response) {
+                            var selectedCik = response.cik;
+    
+                            // Append the new ticker to the list
+                            $('#competitorsList').append(`
+                                <li>
+                                    <input type="checkbox" checked name="competitor" value="${selectedTicker}|${selectedName}|${selectedCik}">
+                                    ${selectedTicker} (${selectedName})<br>
+                                </li>
+                            `);
+                            updateCheckboxes(document.getElementsByName('competitor')); // To ensure the max checkbox limit is enforced
+                        });
+                    }
+                });
+            });
+        });
+    </script>    
+
+</head>
+<body>
+    <h3>Select Competitors for {{ userTicker }}</h3>
+    
+    <!-- Add the search bar for a new ticker -->
+    <label for="newTicker">Choose another ticker:</label>
+    <input type="text" id="newTicker" name="newTicker">
+    <br><br>
+
+    <form method="post" action="/generate_excel">
+        <input type="hidden" name="userTicker" value="{{ userTicker }}">
+        <ul id="competitorsList">
+            <!-- The main user's ticker is checked and disabled by default -->
+            <li>
+                <input type="checkbox" checked disabled value="{{ userTicker }}|{{ userTickerName }}|{{ userTickerCIK }}">
+                {{ userTicker }} ({{ userTickerName }})
+            </li>
+            {% for competitor in competitors %}
+                <li>
+                    <input type="checkbox" name="competitor" value="{{ competitor.ticker }}|{{ competitor.name }}|{{ competitor.cik }}" onchange="updateCheckboxes(document.getElementsByName('competitor'))">
+                    {{ competitor.ticker }} ({{ competitor.name }})<br>
+                </li>
+            {% endfor %}
+        </ul>
+        <br>
+        <input type="submit" value="Generate Excel">
+    </form>
+</body>
+</html>
