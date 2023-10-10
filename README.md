@@ -1,5 +1,5 @@
 # Quick Comps
-This is a website meant to help with making a comparable analysis table for companies in the S&P 500. 
+This is a website meant to simplify making a comparable analysis table for companies in the S&P 500. 
 
 The user is prompted to enter a ticker in the S&P 500 and then select from a list of that ticker's competitors. I pulled competitor info off Wiki: 
 https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
